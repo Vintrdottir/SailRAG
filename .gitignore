@@ -1,0 +1,9 @@
+data/raw_pdfs/
+__pycache__/
+*.pyc
+.venv/
+.env
+data/.DS_Store
+.DS_Store
+.idea/
+.vscode/
