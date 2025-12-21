@@ -6,7 +6,8 @@ services:
       - discovery.type=single-node
       - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
       - plugins.security.disabled=true
-      # dev-friendly; in prod you would enable TLS + security plugin
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=R4g!Sail_2025#A9xQ #no, it's not prod security
+      # dev-friendly: in prod I would enable TLS + security plugin
     ulimits:
       memlock:
         soft: -1
@@ -30,10 +31,11 @@ services:
     ports:
       - "11434:11434"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:11434/api/tags >/dev/null || exit 1"]
+      test: ["CMD", "ollama", "list"]
       interval: 10s
       timeout: 5s
       retries: 30
+      start_period: 20s
 
   backend:
     build:
