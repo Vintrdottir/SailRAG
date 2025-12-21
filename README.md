@@ -1,6 +1,6 @@
 # SailRAG — Yacht & Vessel Knowledge Base (OCR + Hybrid Search + Local LLM)
 
-A production-ready RAG demo for yacht/vessel documentation:
+A production-ready RAG demo for yacht/vessel knowledge base:
 - PDF text extraction with OCR fallback
 - chunking & segmentation
 - embeddings via Ollama
