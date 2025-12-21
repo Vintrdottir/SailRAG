@@ -54,6 +54,8 @@ services:
         condition: service_healthy
       ollama:
         condition: service_healthy
+    volumes:
+      - ./data:/data
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8000/healthz >/dev/null || exit 1"]
       interval: 10s

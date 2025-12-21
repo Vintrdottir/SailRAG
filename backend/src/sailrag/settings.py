@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     opensearch_url: str = "http://localhost:9200"
     ollama_url: str = "http://localhost:11434"
     opensearch_index: str = "sailrag-chunks"
-
+    data_dir: str = "/data"
+    
 
 settings = Settings()
