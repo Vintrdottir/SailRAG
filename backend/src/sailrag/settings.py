@@ -1,0 +1,15 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    app_env: str = "dev"
+    log_level: str = "INFO"
+
+    opensearch_url: str = "http://localhost:9200"
+    ollama_url: str = "http://localhost:11434"
+    opensearch_index: str = "sailrag-chunks"
+
+
+settings = Settings()
