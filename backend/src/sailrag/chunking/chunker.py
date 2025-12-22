@@ -2,6 +2,25 @@ from __future__ import annotations
 
 import re
 
+def looks_like_table_of_contents(text: str) -> bool:
+    t = (text or "").lower()
+    if "table of contents" in t or t.strip().startswith("contents"):
+        return True
+
+    # Heuristic: lots of dot leaders + many short lines ending with numbers
+    dot_leaders = t.count("...")  # crude but works well
+    lines = [ln.strip() for ln in t.splitlines() if ln.strip()]
+    ends_with_number = sum(1 for ln in lines if ln and ln[-1].isdigit())
+
+    if dot_leaders >= 5 and ends_with_number >= 5:
+        return True
+
+    # Another heuristic: many lines with tabs and trailing numbers
+    if sum(1 for ln in lines if "\t" in ln and any(ch.isdigit() for ch in ln[-6:])) >= 8:
+        return True
+
+    return False
+
 
 def normalize_pdf_text(text: str) -> str:
     """

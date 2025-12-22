@@ -7,3 +7,4 @@ class Chunk(BaseModel):
     chunk_id: str
     text: str
     char_count: int
+    tags: list[str] = Field(default_factory=list)

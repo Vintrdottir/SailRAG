@@ -110,6 +110,7 @@ async def ingest_preview(
         pages=pages,
     )
     
+from sailrag.chunking.chunker import chunk_text_windowed, looks_like_table_of_contents
 
 @app.post("/chunk/preview")
 async def chunk_preview(
@@ -132,7 +133,16 @@ async def chunk_preview(
 
     chunks: list[Chunk] = []
     for page in preview.pages:
-        page_chunks = chunk_text_windowed(page.text, max_chars=max_chars, overlap=overlap, min_chars=min_chars)
+        is_toc = looks_like_table_of_contents(page.text)
+        tags = ["toc"] if is_toc else []
+
+        page_chunks = chunk_text_windowed(
+            page.text,
+            max_chars=max_chars,
+            overlap=overlap,
+            min_chars=min_chars,
+        )
+
         for idx, ch in enumerate(page_chunks, start=1):
             chunks.append(
                 Chunk(
@@ -141,14 +151,18 @@ async def chunk_preview(
                     chunk_id=f"{doc_id}-p{page.page_number}-c{idx}",
                     text=ch,
                     char_count=len(ch),
+                    tags=tags,
                 )
             )
+
+    non_toc = [c for c in chunks if "toc" not in c.tags]
 
     return {
         "doc_id": doc_id,
         "pages_previewed": preview.pages_previewed,
         "chunks_total": len(chunks),
-        "chunks": [c.model_dump() for c in chunks[:12]],  # show first 12 for preview
+        "chunks_non_toc_total": len(non_toc),
+        "chunks": [c.model_dump() for c in non_toc[:3]],  # show first 3 non-TOC chunks
     }
 
 
