@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     opensearch_index: str = "sailrag-chunks"
     data_dir: str = "/data"
     ollama_embed_model: str = "nomic-embed-text"
-    oollama_llm_model: str = "llama3.2:3b"
+    ollama_llm_model: str = "llama3.2:3b"
 
 
 settings = Settings()
