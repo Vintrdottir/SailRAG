@@ -177,7 +177,7 @@ async def embed_preview(
         text=text,
     )
     return {"dim": len(vec), "vector_head": vec[:8]}
-    
+
 
 import time
 
@@ -260,6 +260,90 @@ async def embed_chunks_preview(
         ],
     }
 
+
+from sailrag.opensearch.index import ensure_index
+
+@app.post("/index/create")
+async def index_create():
+    return await ensure_index(
+        opensearch_url=settings.opensearch_url,
+        index_name=settings.opensearch_index,
+        embedding_dim=768,
+    )
+
+
+from sailrag.opensearch.client import bulk_index
+
+@app.post("/index/ingest")
+async def index_ingest(
+    path: str = Body(..., embed=True),
+    max_pages: int = Body(30, embed=True, ge=1, le=300),
+    max_chars: int = Body(900, embed=True, ge=200, le=3000),
+    overlap: int = Body(150, embed=True, ge=0, le=500),
+    min_chars: int = Body(120, embed=True, ge=20, le=500),
+):
+    # Ensure index exists
+    await ensure_index(settings.opensearch_url, settings.opensearch_index, embedding_dim=768)
+
+    preview = await ingest_preview(path=path, max_pages=max_pages)
+    doc_id = Path(path).name.replace(".pdf", "")
+
+    # Chunk + filter TOC
+    chunks: list[Chunk] = []
+    for page in preview.pages:
+        is_toc = looks_like_table_of_contents(page.text)
+        tags = ["toc"] if is_toc else []
+
+        page_chunks = chunk_text_windowed(
+            page.text,
+            max_chars=max_chars,
+            overlap=overlap,
+            min_chars=min_chars,
+        )
+
+        for idx, ch in enumerate(page_chunks, start=1):
+            chunks.append(
+                Chunk(
+                    doc_id=doc_id,
+                    page_number=page.page_number,
+                    chunk_id=f"{doc_id}-p{page.page_number}-c{idx}",
+                    text=ch,
+                    char_count=len(ch),
+                    tags=tags,
+                )
+            )
+
+    non_toc = [c for c in chunks if "toc" not in c.tags]
+
+    # Embed + prepare bulk docs
+    bulk_docs: list[dict] = []
+    for c in non_toc:
+        vec = await embed_text_ollama(
+            ollama_url=settings.ollama_url,
+            model=settings.ollama_embed_model,
+            text=c.text,
+        )
+        bulk_docs.append(
+            {
+                "id": c.chunk_id,
+                "doc_id": c.doc_id,
+                "chunk_id": c.chunk_id,
+                "page_number": c.page_number,
+                "tags": c.tags,
+                "text": c.text,
+                "embedding": vec,
+            }
+        )
+
+    bulk_res = await bulk_index(settings.opensearch_url, settings.opensearch_index, bulk_docs)
+
+    return {
+        "doc_id": doc_id,
+        "pages_indexed": preview.pages_previewed,
+        "chunks_total": len(chunks),
+        "chunks_indexed": len(non_toc),
+        "bulk": bulk_res,
+    }
 
 
 
