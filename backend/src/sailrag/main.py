@@ -346,4 +346,48 @@ async def index_ingest(
     }
 
 
+from sailrag.opensearch.search import bm25_search, knn_search, fuse_hits, to_dict
+
+@app.post("/search")
+async def search(
+    query: str = Body(..., embed=True),
+    k: int = Body(8, embed=True, ge=1, le=50),
+    w_bm25: float = Body(0.5, embed=True, ge=0.0, le=1.0),
+    w_knn: float = Body(0.5, embed=True, ge=0.0, le=1.0),
+    include_raw: bool = Body(False, embed=True),
+):
+    """
+    Hybrid retrieval:
+    - BM25 (lexical) over 'text'
+    - kNN (semantic) over 'embedding'
+    - weighted fusion of normalized scores
+    """
+    # 1) Query embedding
+    qvec = await embed_text_ollama(
+        ollama_url=settings.ollama_url,
+        model=settings.ollama_embed_model,
+        text=query,
+    )
+
+    # 2) Retrieve
+    bm25_hits = await bm25_search(settings.opensearch_url, settings.opensearch_index, query=query, k=k)
+    knn_hits = await knn_search(settings.opensearch_url, settings.opensearch_index, query_vector=qvec, k=k)
+
+    # 3) Fuse
+    fused = fuse_hits(bm25_hits, knn_hits, w_bm25=w_bm25, w_knn=w_knn)[:k]
+
+    resp = {
+        "query": query,
+        "k": k,
+        "weights": {"bm25": w_bm25, "knn": w_knn},
+        "results": [to_dict(h) for h in fused],
+    }
+
+    if include_raw:
+        resp["bm25_raw"] = [to_dict(h) for h in bm25_hits]
+        resp["knn_raw"] = [to_dict(h) for h in knn_hits]
+
+    return resp
+
+
 
