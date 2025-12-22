@@ -177,6 +177,89 @@ async def embed_preview(
         text=text,
     )
     return {"dim": len(vec), "vector_head": vec[:8]}
+    
+
+import time
+
+@app.post("/embed/chunks_preview")
+async def embed_chunks_preview(
+    path: str = Body(..., embed=True),
+    max_pages: int = Body(3, embed=True, ge=1, le=30),
+    max_chars: int = Body(900, embed=True, ge=200, le=3000),
+    overlap: int = Body(150, embed=True, ge=0, le=500),
+    min_chars: int = Body(120, embed=True, ge=20, le=500),
+    max_chunks: int = Body(12, embed=True, ge=1, le=100),
+):
+    """
+    Debug endpoint: ingest -> chunk -> (filter TOC) -> embed first N chunks.
+    No indexing yet.
+    """
+    t0 = time.time()
+
+    # 1) Ingest preview (page-level adaptive)
+    preview = await ingest_preview(path=path, max_pages=max_pages)
+
+    doc_id = Path(path).name.replace(".pdf", "")
+
+    # 2) Chunk preview and TOC filtering (reuse your logic)
+    chunks: list[Chunk] = []
+    for page in preview.pages:
+        is_toc = looks_like_table_of_contents(page.text)
+        tags = ["toc"] if is_toc else []
+
+        page_chunks = chunk_text_windowed(
+            page.text,
+            max_chars=max_chars,
+            overlap=overlap,
+            min_chars=min_chars,
+        )
+
+        for idx, ch in enumerate(page_chunks, start=1):
+            chunks.append(
+                Chunk(
+                    doc_id=doc_id,
+                    page_number=page.page_number,
+                    chunk_id=f"{doc_id}-p{page.page_number}-c{idx}",
+                    text=ch,
+                    char_count=len(ch),
+                    tags=tags,
+                )
+            )
+
+    non_toc = [c for c in chunks if "toc" not in c.tags]
+    to_embed = non_toc[:max_chunks]
+
+    # 3) Embeddings (sequential for now; later we can batch/parallelize)
+    vectors_head: list[list[float]] = []
+    for c in to_embed:
+        vec = await embed_text_ollama(
+            ollama_url=settings.ollama_url,
+            model=settings.ollama_embed_model,
+            text=c.text,
+        )
+        vectors_head.append(vec[:8])
+
+    elapsed_ms = int((time.time() - t0) * 1000)
+
+    return {
+        "doc_id": doc_id,
+        "pages_previewed": preview.pages_previewed,
+        "chunks_total": len(chunks),
+        "chunks_non_toc_total": len(non_toc),
+        "embedded_chunks": len(to_embed),
+        "embedding_dim": 768,  # we can also compute from first vec if you want
+        "elapsed_ms": elapsed_ms,
+        "examples": [
+            {
+                "chunk_id": c.chunk_id,
+                "page_number": c.page_number,
+                "char_count": c.char_count,
+                "vector_head": vectors_head[i],
+            }
+            for i, c in enumerate(to_embed)
+        ],
+    }
+
 
 
 
