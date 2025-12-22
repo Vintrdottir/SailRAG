@@ -9,10 +9,14 @@ class PageText(BaseModel):
     non_whitespace_ratio: float
 
 
+class DocumentPreviewSummary(BaseModel):
+    text_pages: int
+    ocr_pages: int
+
+
 class DocumentPreview(BaseModel):
     path: str
     pages_total: int
     pages_previewed: int
-    chosen_strategy: str  # "text" or "ocr"
-    reason: str
+    summary: DocumentPreviewSummary
     pages: list[PageText]

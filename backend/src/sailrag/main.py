@@ -36,11 +36,13 @@ async def healthz():
     }
 
 from pathlib import Path
-from fastapi import Body, HTTPException
 
-from sailrag.ingest.models import DocumentPreview, PageText
-from sailrag.ingest.pdf_loader import decide_text_vs_ocr, extract_text_for_pages, choose_sample_pages
-from sailrag.ingest.ocr import ocr_pdf_pages
+from fastapi import Body, FastAPI, HTTPException
+from pypdf import PdfReader
+
+from sailrag.ingest.models import DocumentPreview, DocumentPreviewSummary, PageText
+from sailrag.ingest.pdf_loader import extract_text_for_page, is_text_good_enough, _quality
+from sailrag.ingest.ocr import ocr_pdf_page
 
 @app.get("/ingest/list")
 async def ingest_list():
@@ -58,63 +60,52 @@ async def ingest_preview(
     max_pages: int = Body(3, embed=True, ge=1, le=20),
 ):
     """
-    Preview document extraction:
-    - tries PDF text extraction
-    - decides whether to fallback to OCR
-    - returns per-page preview text + metadata
+    Preview document extraction with PAGE-LEVEL adaptive fallback:
+    - for each page in the preview range:
+      - try PDF text extraction
+      - if text quality is weak -> OCR that page
     """
     pdf_path = Path(settings.data_dir) / path
     if not pdf_path.exists():
         raise HTTPException(status_code=404, detail=f"File not found: {pdf_path}")
 
-    # 1) Attempt text-layer extraction
-    from sailrag.ingest.pdf_loader import extract_text_for_pages, choose_sample_pages
-    from pypdf import PdfReader
-
     reader = PdfReader(str(pdf_path))
     total_pages = len(reader.pages)
 
-    sample_pages = choose_sample_pages(total_pages, max_pages)
-    texts, _ = extract_text_for_pages(pdf_path, sample_pages)
-    strategy, reason = decide_text_vs_ocr(texts, total_pages)
+    preview_pages = min(max_pages, total_pages)
 
     pages: list[PageText] = []
+    text_pages = 0
+    ocr_pages = 0
 
-    def page_metrics(page_number: int, method: str, text: str) -> PageText:
-        char_count = len(text)
-        stripped = "".join(text.split())
-        ratio = (len(stripped) / char_count) if char_count > 0 else 0.0
-        return PageText(
-            page_number=page_number,
-            method=method,
-            text=text,
-            char_count=char_count,
-            non_whitespace_ratio=ratio,
+    for page_no in range(1, preview_pages + 1):
+        extracted = extract_text_for_page(pdf_path, page_no)
+
+        if is_text_good_enough(extracted):
+            method = "text"
+            text = extracted
+            text_pages += 1
+        else:
+            method = "ocr"
+            text = ocr_pdf_page(pdf_path, page_no)
+            ocr_pages += 1
+
+        q = _quality(text)
+        pages.append(
+            PageText(
+                page_number=page_no,
+                method=method,
+                text=text,
+                char_count=q.char_count,
+                non_whitespace_ratio=q.non_whitespace_ratio,
+            )
         )
-
-    if strategy == "text":
-        for page_no, t in zip(sample_pages, texts, strict=False):
-            pages.append(page_metrics(page_no, "text", t))
-
-        return DocumentPreview(
-            path=path,
-            pages_total=total_pages,
-            pages_previewed=len(pages),
-            chosen_strategy="text",
-            reason=reason,
-            pages=pages,
-        )
-
-    # 2) OCR fallback
-    ocr_texts, previewed_pages = ocr_pdf_pages(pdf_path, max_pages=max_pages)
-    for i, t in enumerate(ocr_texts, start=1):
-        pages.append(page_metrics(i, "ocr", t))
 
     return DocumentPreview(
         path=path,
-        pages_total=total_pages,  # from text extraction attempt
-        pages_previewed=previewed_pages,
-        chosen_strategy="ocr",
-        reason=reason,
+        pages_total=total_pages,
+        pages_previewed=len(pages),
+        summary=DocumentPreviewSummary(text_pages=text_pages, ocr_pages=ocr_pages),
         pages=pages,
     )
+

@@ -94,3 +94,32 @@ def decide_text_vs_ocr(page_texts: list[str], total_pages: int) -> tuple[str, st
         return "text", f"Text layer seems present (chars={total_chars}, non_empty_pages={non_empty_pages}, avg_ratio={avg_ratio:.2f})."
 
     return "ocr", f"Text layer seems weak (chars={total_chars}, non_empty_pages={non_empty_pages}, avg_ratio={avg_ratio:.2f})."
+
+
+def is_text_good_enough(text: str) -> bool:
+    """
+    Decide whether extracted PDF text is usable.
+
+    We prefer PDF text layer over OCR when it contains any meaningful content,
+    even if the page is short (e.g., cover pages).
+    """
+    q = _quality(text)
+
+    # Clearly good text pages
+    if q.char_count >= 250 and q.non_whitespace_ratio >= 0.10:
+        return True
+
+    # Short but meaningful pages (covers, section separators)
+    if q.char_count >= 80 and q.non_whitespace_ratio >= 0.60:
+        return True
+
+    return False
+
+
+
+def extract_text_for_page(pdf_path: Path, page_number_1based: int) -> str:
+    reader = PdfReader(str(pdf_path))
+    total_pages = len(reader.pages)
+    if page_number_1based < 1 or page_number_1based > total_pages:
+        return ""
+    return reader.pages[page_number_1based - 1].extract_text() or ""
