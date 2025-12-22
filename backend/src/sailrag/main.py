@@ -390,4 +390,53 @@ async def search(
     return resp
 
 
+from sailrag.llm.ollama import generate_ollama
+from sailrag.rag.prompting import build_rag_prompt
+
+@app.post("/answer")
+async def answer(
+    question: str = Body(..., embed=True),
+    k: int = Body(6, embed=True, ge=1, le=20),
+    w_bm25: float = Body(0.5, embed=True, ge=0.0, le=1.0),
+    w_knn: float = Body(0.5, embed=True, ge=0.0, le=1.0),
+):
+    # 1) Retrieve context (reuse /search logic, but inline for performance)
+    qvec = await embed_text_ollama(
+        ollama_url=settings.ollama_url,
+        model=settings.ollama_embed_model,
+        text=question,
+    )
+    bm25_hits = await bm25_search(settings.opensearch_url, settings.opensearch_index, query=question, k=k)
+    knn_hits = await knn_search(settings.opensearch_url, settings.opensearch_index, query_vector=qvec, k=k)
+    fused = fuse_hits(bm25_hits, knn_hits, w_bm25=w_bm25, w_knn=w_knn)[:k]
+
+    contexts = [
+        {
+            "doc_id": h.doc_id,
+            "page_number": h.page_number,
+            "chunk_id": h.chunk_id,
+            "text": h.text,
+        }
+        for h in fused
+    ]
+
+    # 2) Prompt + generate
+    prompt = build_rag_prompt(question, contexts)
+    response = await generate_ollama(
+        ollama_url=settings.ollama_url,
+        model=settings.ollama_llm_model,
+        prompt=prompt,
+    )
+
+    return {
+        "question": question,
+        "k": k,
+        "weights": {"bm25": w_bm25, "knn": w_knn},
+        "answer": response.strip(),
+        "citations": contexts,
+    }
+
+
+
+
 
