@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 import httpx
-
+from sailrag.chunking.chunker import chunk_text_windowed
+from sailrag.chunking.models import Chunk
 from sailrag.settings import settings
 
 app = FastAPI(title="SailRAG API", version="0.1.0")
@@ -108,4 +109,46 @@ async def ingest_preview(
         summary=DocumentPreviewSummary(text_pages=text_pages, ocr_pages=ocr_pages),
         pages=pages,
     )
+    
+
+@app.post("/chunk/preview")
+async def chunk_preview(
+    path: str = Body(..., embed=True),
+    max_pages: int = Body(3, embed=True, ge=1, le=30),
+    max_chars: int = Body(900, embed=True, ge=200, le=3000),
+    overlap: int = Body(150, embed=True, ge=0, le=500),
+    min_chars: int = Body(120, embed=True, ge=20, le=500),
+
+):
+    """
+    Run ingestion preview + chunking preview (no indexing yet).
+    Returns chunk examples for debugging.
+    """
+    # reuse the existing ingestion preview logic by calling the function directly
+    preview = await ingest_preview(path=path, max_pages=max_pages)
+
+    # derive doc_id from filename
+    doc_id = Path(path).name.replace(".pdf", "")
+
+    chunks: list[Chunk] = []
+    for page in preview.pages:
+        page_chunks = chunk_text_windowed(page.text, max_chars=max_chars, overlap=overlap, min_chars=min_chars)
+        for idx, ch in enumerate(page_chunks, start=1):
+            chunks.append(
+                Chunk(
+                    doc_id=doc_id,
+                    page_number=page.page_number,
+                    chunk_id=f"{doc_id}-p{page.page_number}-c{idx}",
+                    text=ch,
+                    char_count=len(ch),
+                )
+            )
+
+    return {
+        "doc_id": doc_id,
+        "pages_previewed": preview.pages_previewed,
+        "chunks_total": len(chunks),
+        "chunks": [c.model_dump() for c in chunks[:12]],  # show first 12 for preview
+    }
+
 
