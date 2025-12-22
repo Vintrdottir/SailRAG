@@ -165,4 +165,18 @@ async def chunk_preview(
         "chunks": [c.model_dump() for c in non_toc[:3]],  # show first 3 non-TOC chunks
     }
 
+from sailrag.embeddings.ollama import embed_text_ollama
+
+@app.post("/embed/preview")
+async def embed_preview(
+    text: str = Body(..., embed=True),
+):
+    vec = await embed_text_ollama(
+        ollama_url=settings.ollama_url,
+        model=settings.ollama_embed_model,
+        text=text,
+    )
+    return {"dim": len(vec), "vector_head": vec[:8]}
+
+
 

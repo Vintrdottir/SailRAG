@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     ollama_url: str = "http://localhost:11434"
     opensearch_index: str = "sailrag-chunks"
     data_dir: str = "/data"
-    
+    ollama_embed_model: str = "nomic-embed-text"
+
 
 settings = Settings()
