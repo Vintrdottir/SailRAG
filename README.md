@@ -1,75 +1,75 @@
-# SailRAG — Nautical Document Q&A (OCR + Hybrid Search + Local LLM)
+# ⛵ SailRAG — Nautical Document Q&A  
+*(OCR + Hybrid Search + Local LLM)*
 
-SailRAG is a production-style Retrieval-Augmented Generation (RAG) system for querying nautical and maritime documents.
-It combines hybrid retrieval (BM25 + vector search), local LLM inference, and page-level citations to provide transparent, grounded answers.
+SailRAG is a **production-style Retrieval-Augmented Generation (RAG) system** for querying nautical and maritime documents.  
+It combines **hybrid retrieval (BM25 + vector search)**, **local LLM inference**, and **page-level citations** to provide transparent, grounded answers.
 
-The project is designed as a portfolio-quality, end-to-end system, focusing on correctness, explainability, and realistic tradeoffs rather than API shortcuts.
+The project is designed as a **portfolio-quality, end-to-end system**, focusing on correctness, explainability, and realistic tradeoffs rather than API shortcuts.
 
-✨ Key Features
+---
 
-Hybrid Retrieval
+## ✨ Key Features
 
-BM25 keyword search + dense vector similarity (OpenSearch)
+### 🔎 Hybrid Retrieval
+- BM25 keyword search + dense vector similarity (OpenSearch)
+- Tunable weighting between lexical and semantic retrieval
 
-Tunable weighting between lexical and semantic retrieval
+### 📄 Adaptive PDF Ingestion
+- Page-level decision between text extraction and OCR
+- Handles mixed documents (text pages + scanned diagrams)
 
-Adaptive PDF Ingestion
+### ✂️ High-Quality Chunking
+- Windowed chunking with overlap
+- Table-of-contents detection and filtering
 
-Page-level decision between text extraction and OCR
+### 🧠 Local Embeddings & LLM
+- Embeddings: `nomic-embed-text` via Ollama
+- Answer generation: local LLM (Ollama, CPU-only)
 
-Handles mixed documents (text pages + scanned diagrams)
+### 📌 Transparent Answers
+- Each answer includes **page-level citations**
+- Traceable chunk IDs and document references
 
-High-Quality Chunking
+### 🖥️ Interactive UI
+- Streamlit app for asking questions
+- Live control over retrieval parameters
 
-Windowed chunking with overlap
+### 🐳 Fully Dockerized
+- One-command startup
+- No external paid APIs required
 
-Table-of-contents detection and filtering
+---
 
-Local Embeddings & LLM
+## 📚 Dataset Choice
 
-Embeddings: nomic-embed-text via Ollama
+The system is intentionally limited to **English-language public maritime documents**  
+(COLREG, sailing manuals, navigation guides) to ensure:
 
-Answer generation: local LLM (Ollama, CPU-only)
+- consistent OCR quality
+- embedding alignment
+- reliable retrieval performance
 
-Transparent Answers
+**Included documents:**
 
-Each answer includes page-level citations
-
-Traceable chunk IDs and document references
-
-Interactive UI
-
-Streamlit app for asking questions
-
-Live control over retrieval parameters
-
-Fully Dockerized
-
-One-command startup
-
-No external paid APIs required
-
-  ## Dataset choice
-The system is intentionally limited to English-language public maritime documents (COLREG, sailing manuals, navigation guides) to ensure consistent OCR quality, embedding alignment, and retrieval performance.
-
-1) COLREG — International Regulations for Preventing Collisions at Sea
+1. **COLREG — International Regulations for Preventing Collisions at Sea**  
    https://www.dohle-yachts.com/wp-content/uploads/2022/07/COLREGS-The-Rules-of-the-Road.pdf
 
-2) Basic Sailing Manual (CSUN)
+2. **Basic Sailing Manual (CSUN)**  
    https://www.csun.edu/sites/default/files/CSUN%20Sailing%20Manual%20updated%202016_0.pdf
 
-3) Sailing Made Simple (full book PDF)
+3. **Sailing Made Simple (Full Book)**  
    https://www.sjsu.edu/people/shirley.reekie/courses/sailing/s2/Sailing-Made-Simple-whole-book.pdf
 
-4) Nautical Charts & Navigation Guide
+4. **Nautical Charts & Navigation Guide**  
    https://scuba.garykessler.net/library/Charts_Navigation.pdf
 
-5) USCG Navigation Rules (NavRules)
+5. **USCG Navigation Rules (NavRules)**  
    https://www.navcen.uscg.gov/sites/default/files/pdf/navRules/navrules.pdf
 
+---
 
+## 🧭 Architecture Overview
 
-🧭 Architecture Overview
 User (Streamlit UI)
         |
         v
@@ -83,57 +83,77 @@ FastAPI Backend
         v
 OpenSearch (BM25 + Vector Index)
 
-🧠 Why Hybrid Retrieval?
+## 🧠 Why Hybrid Retrieval?
 
 Pure vector search can miss exact terminology and structured references.
 Pure keyword search lacks semantic understanding.
 
-SailRAG uses hybrid retrieval to combine:
+SailRAG combines:
 
-BM25 → precise keyword matching (e.g. “hazards”, “bridge clearance”)
+- BM25 → precise keyword matching
+(e.g. “hazards”, “bridge clearance”)
 
-kNN vectors → semantic similarity across phrasing
+- kNN vectors → semantic similarity across phrasing
 
-The weights are configurable per query.
+Retrieval weights are configurable per query.
 
-🧪 Example Query
+## 🧪 Example Query
 
-Question
+**Question**
 
-How do nautical charts help you avoid hazards in unfamiliar waters?
+- How do nautical charts help you avoid hazards in unfamiliar waters?
 
-Answer
+**Answer**
 
-Nautical charts provide detailed information about hazards, navigation markers, seabed characteristics, and obstructions such as bridges, enabling safe navigation even in unfamiliar waters.
+- Nautical charts are an essential tool for avoiding hazards in unfamiliar waters. Here's how they can help:
 
-Citations
+Provide detailed information about the waterway and seabed, including:
+Shape of the coast
+Location of islands and hazards
+Navigation markers
+Warnings of hazards (e.g., shallow water, rocks, or reefs)
+Height of bridges and other obstructions
+Show nautical traffic lanes and boat movement restrictions
+Offer a better understanding of coastal and navigational features
+To use nautical charts effectively:
 
-Charts_Navigation — page 8 — chunk p8-c3
+Choose the right scale for your needs:
+Small-scale charts (1:150,000 to 1:600,000) for open seas navigation
+Medium-scale charts (1:50,000 to 1:150,000) for inshore navigation and coastal areas
+Large-scale charts (>1:50,000) for harbors, anchorage areas, and smaller waterways
+Familiarize yourself with chart symbols and markings:
+Learn the basic channel markers (e.g., buoys, beacons)
+Understand ATONs (Aids to Navigation) and how to interpret them
+Use charts in conjunction with other navigation tools, such as GPS and radar, to stay safe and on course.
+By using nautical charts effectively, you can reduce the risk of encountering hazards and navigate unfamiliar waters with confidence.
 
-Charts_Navigation — page 8 — chunk p8-c2
+**Citations**
 
-🚀 Running the Project
-Requirements
+- Charts_Navigation — page 8 — chunk p8-c3
 
-Docker + Docker Compose
+- Charts_Navigation — page 8 — chunk p8-c2
 
-~8 GB RAM recommended (CPU-only inference)
+## 🚀 Running the Project
+**Requirements**
 
-Start everything
+- Docker + Docker Compose
+
+- ~8 GB RAM recommended (CPU-only inference)
+
+**Start everything**
 docker compose up --build
 
+**Services**
 
-Services:
+- Streamlit UI → http://localhost:8501
 
-Streamlit UI → http://localhost:8501
+- Backend API → http://localhost:8000
 
-Backend API → http://localhost:8000
+- OpenSearch → http://localhost:9200
 
-OpenSearch → http://localhost:9200
+- Ollama → http://localhost:11434
 
-Ollama → http://localhost:11434
-
-🗂️ Project Structure
+## 🗂️ Project Structure
 .
 ├── backend/
 │   └── src/sailrag/
@@ -148,51 +168,49 @@ Ollama → http://localhost:11434
 ├── docker-compose.yml
 └── README.md
 
-⚙️ Configuration
+## ⚙️ Configuration
 
 All configuration is handled via environment variables and typed settings.
 
 Examples:
 
-OPENSEARCH_URL
+- OPENSEARCH_URL
 
-OLLAMA_URL
+- OLLAMA_URL
 
-OLLAMA_LLM_MODEL
+- OLLAMA_LLM_MODEL
 
-OPENSEARCH_INDEX
+- OPENSEARCH_INDEX
 
-🧩 Design Tradeoffs
+## 🧩 Design Tradeoffs
+**Local inference**
 
-Local inference
+- ✅ No external API costs
 
-✅ No external API costs
+- ❌ Higher latency than hosted LLMs
 
-❌ Higher latency than hosted LLMs
+**Page-level OCR**
 
-Page-level OCR
+- ✅ Accurate handling of mixed PDFs
 
-✅ Accurate handling of mixed PDFs
+- ❌ Slightly slower ingestion
 
-❌ Slightly slower ingestion
+**Explicit citations**
 
-Explicit citations
+- ✅ Trustworthy, debuggable answers
 
-✅ Trustworthy, debuggable answers
-
-❌ More complex retrieval pipeline
+- ❌ More complex retrieval pipeline
 
 These choices were made intentionally to reflect real production constraints.
 
-🔮 Future Work
+## 🔮 Future Work
 
-Streaming responses from the LLM
+- Streaming responses from the LLM
 
-Caching embeddings and retrieval results
+- Caching embeddings and retrieval results
 
-UI support for document upload
+- UI support for document upload
 
-Reranking with cross-encoders
+- Reranking with cross-encoders
 
-Multi-document summarization
-
+- Multi-document summarization
