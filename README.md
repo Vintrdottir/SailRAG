@@ -1,10 +1,10 @@
 # ⛵ SailRAG — Nautical Document Q&A  
 *(OCR + Hybrid Search + Local LLM)*
 
-SailRAG is a **production-style Retrieval-Augmented Generation (RAG) system** for querying nautical and maritime documents.  
-It combines **hybrid retrieval (BM25 + vector search)**, **local LLM inference**, and **page-level citations** to provide transparent, grounded answers.
+SailRAG is a production-style Retrieval-Augmented Generation (RAG) system for querying nautical and maritime documents.  
+It combines hybrid retrieval (BM25 + vector search), local LLM inference, and page-level citations to provide transparent, grounded answers.
 
-The project is designed as a **portfolio-quality, end-to-end system**, focusing on correctness, explainability, and realistic tradeoffs rather than API shortcuts.
+The project is designed as a portfolio-quality, end-to-end system, focusing on correctness, explainability, and realistic tradeoffs rather than API shortcuts.
 
 ---
 
@@ -70,18 +70,8 @@ The system is intentionally limited to **English-language public maritime docume
 
 ## 🧭 Architecture Overview
 
-User (Streamlit UI)
-        |
-        v
-FastAPI Backend
-  ├── Ingestion & OCR
-  ├── Chunking & Metadata
-  ├── Embedding Generation (Ollama)
-  ├── Hybrid Retrieval (OpenSearch)
-  └── Answer Generation (Ollama LLM)
-        |
-        v
-OpenSearch (BM25 + Vector Index)
+<img width="324" height="292" alt="image" src="https://github.com/user-attachments/assets/68456784-195b-4d88-9251-c0bc2f654ede" />
+
 
 ## 🧠 Why Hybrid Retrieval?
 
@@ -154,19 +144,8 @@ docker compose up --build
 - Ollama → http://localhost:11434
 
 ## 🗂️ Project Structure
-.
-├── backend/
-│   └── src/sailrag/
-│       ├── ingest/        # PDF loading, OCR, page analysis
-│       ├── chunking/      # Chunking + TOC detection
-│       ├── embed/         # Embedding generation
-│       ├── search/        # Hybrid OpenSearch retrieval
-│       ├── llm/           # Ollama LLM client
-│       └── main.py        # FastAPI endpoints
-├── ui/
-│   └── app.py             # Streamlit UI
-├── docker-compose.yml
-└── README.md
+<img width="540" height="326" alt="image" src="https://github.com/user-attachments/assets/778ef37d-0bec-4180-a49e-7d9c1d83949c" />
+
 
 ## ⚙️ Configuration
 
