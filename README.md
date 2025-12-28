@@ -91,30 +91,37 @@ Retrieval weights are configurable per query.
 
 **Question**
 
-- How do nautical charts help you avoid hazards in unfamiliar waters?
+How do nautical charts help you avoid hazards in unfamiliar waters?
 
 **Answer**
 
-- Nautical charts are an essential tool for avoiding hazards in unfamiliar waters. Here's how they can help:
+Nautical charts are an essential tool for avoiding hazards in unfamiliar waters. Here's how they can help:
 
 Provide detailed information about the waterway and seabed, including:
-Shape of the coast
-Location of islands and hazards
-Navigation markers
-Warnings of hazards (e.g., shallow water, rocks, or reefs)
-Height of bridges and other obstructions
-Show nautical traffic lanes and boat movement restrictions
-Offer a better understanding of coastal and navigational features
+- Shape of the coast
+- Location of islands and hazards
+- Navigation markers
+- Warnings of hazards (e.g., shallow water, rocks, or reefs)
+- Height of bridges and other obstructions
+- Show nautical traffic lanes and boat movement restrictions
+- Offer a better understanding of coastal and navigational features
+
 To use nautical charts effectively:
 
-Choose the right scale for your needs:
+- Choose the right scale for your needs:
+
 Small-scale charts (1:150,000 to 1:600,000) for open seas navigation
+
 Medium-scale charts (1:50,000 to 1:150,000) for inshore navigation and coastal areas
+
 Large-scale charts (>1:50,000) for harbors, anchorage areas, and smaller waterways
-Familiarize yourself with chart symbols and markings:
-Learn the basic channel markers (e.g., buoys, beacons)
-Understand ATONs (Aids to Navigation) and how to interpret them
-Use charts in conjunction with other navigation tools, such as GPS and radar, to stay safe and on course.
+
+
+- Familiarize yourself with chart symbols and marking
+- Learn the basic channel markers (e.g., buoys, beacons)
+- Understand ATONs (Aids to Navigation) and how to interpret them
+- Use charts in conjunction with other navigation tools, such as GPS and radar, to stay safe and on course.
+
 By using nautical charts effectively, you can reduce the risk of encountering hazards and navigate unfamiliar waters with confidence.
 
 **Citations**
