@@ -87,6 +87,48 @@ SailRAG combines:
 
 Retrieval weights are configurable per query.
 
+## 📊 Retrieval Evaluation
+
+To validate retrieval quality, an offline evaluation harness was implemented to compare different retrieval strategies using standard IR metrics.
+
+**Methodology**
+
+- A small, curated question–evidence dataset was created from the ingested nautical documents.
+
+- Each question is associated with an expected document and page number containing the correct evidence.
+
+- For each query, the system evaluates:
+
+-> BM25-only retrieval
+
+-> Vector-only (kNN) retrieval
+
+-> Hybrid retrieval with different BM25 / kNN weightings
+
+- Metrics are computed over the top-k retrieved chunks.
+
+**Metrics**
+
+- Recall@5 / Recall@10 — whether the correct evidence appears in the top-k results
+
+- MRR@10 (Mean Reciprocal Rank) — how highly the first correct result is ranked
+
+**Results**
+
+<img width="359" height="110" alt="image" src="https://github.com/user-attachments/assets/cd0c1b88-ad12-4345-b2a6-0878e4e1b5f6" />
+
+
+**Conclusions**
+
+All strategies achieved perfect Recall@10, indicating reliable evidence coverage.
+
+Hybrid retrieval with equal BM25 and vector weighting achieved the highest MRR, meaning relevant evidence was ranked highest on average.
+
+Based on these results, hybrid retrieval with 50/50 weighting was selected as the default configuration.
+
+This evaluation ensures that retrieval decisions are data-driven rather than heuristic, and provides a foundation for future tuning as more documents are ingested.
+
+
 ## 🧪 Example Query
 
 **Question**
